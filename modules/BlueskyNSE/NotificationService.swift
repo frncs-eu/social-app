@@ -74,7 +74,11 @@ class NotificationService: UNNotificationServiceExtension {
 
     if type == BadgeType.Generic {
       if operation == BadgeOperation.Decrement {
-        genericCount = 0
+        if let decrementBy = content.userInfo["decrementBy"] as? Int {
+          genericCount -= decrementBy
+        } else {
+          genericCount = 0
+        }
       } else {
         genericCount += 1
       }
