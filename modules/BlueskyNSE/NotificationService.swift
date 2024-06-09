@@ -61,11 +61,12 @@ class NotificationService: UNNotificationServiceExtension {
     return content.mutableCopy() as? UNMutableNotificationContent
   }
 
-  func clampBadgeCount(_ count: Int) -> Int {
-    if count < 0 {
+  func clampBadgeCount(current: Int, decrementBy by: Int) -> Int {
+    let new = current - by
+    if new < 0 {
       return 0
     }
-    return count
+    return new
   }
 
   func mutateWithBadge(_ content: UNMutableNotificationContent, badgeType type: BadgeType, operation: BadgeOperation) {
@@ -75,7 +76,7 @@ class NotificationService: UNNotificationServiceExtension {
     if type == BadgeType.Generic {
       if operation == BadgeOperation.Decrement {
         if let decrementBy = content.userInfo["decrementBy"] as? Int {
-          genericCount -= decrementBy
+          genericCount = clampBadgeCount(current: genericCount, decrementBy: decrementBy)
         } else {
           genericCount = 0
         }
@@ -85,7 +86,11 @@ class NotificationService: UNNotificationServiceExtension {
       prefs?.setValue(genericCount, forKey: BadgeType.Generic.rawValue)
     } else if type == BadgeType.Messages {
       if operation == BadgeOperation.Decrement {
-        messagesCount -= 1
+        if let decrementBy = content.userInfo["decrementBy"] as? Int {
+          messagesCount = clampBadgeCount(current: messagesCount, decrementBy: decrementBy)
+        } else {
+          messagesCount -= 1
+        }
       } else {
         genericCount += 1
       }
